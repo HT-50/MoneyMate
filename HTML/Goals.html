@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MoneyMate - Goals</title>
+    <link rel="stylesheet" href="../CSS/Style.css">
+</head>
+<body>
+    <nav class="navbar">
+        <h1>MoneyMate</h1>
+        <ul>
+            <li><a href="Dashboard.html">Dashboard</a></li>
+            <li><a href="Transaction.html">Transactions</a></li>
+            <li><a href="Goals.html" class="active">Goals</a></li>
+            <li><a href="Abouts.html">About</a></li>
+            <li><button id="open-auth-btn" class="auth-trigger-btn">Account</button></li>
+        </ul>
+    </nav>
+
+    <main class="container">
+        <section class="goals-section">
+            <h2>Savings Goals</h2>
+            <div class="form-group">
+                <input type="text" id="goal-title" placeholder="Goal Title">
+                <input type="number" id="goal-target" placeholder="Target Amount">
+                <input type="number" id="goal-current" placeholder="Current Saved (Optional)">
+                <button onclick="handleGoalSubmit()">Add Goal</button>
+            </div>
+
+            <div id="goals-container" class="goals-grid">
+                <!-- Dynamic goals cards populate here -->
+            </div>
+        </section>
+    </main>
+
+    <!-- Auth Modal Overlay -->
+    <div id="auth-modal" class="modal-overlay" style="display: none;">
+        <div class="modal-card">
+            <h2>MoneyMate Account</h2>
+            <p>Sign in to sync your data in real time.</p>
+            
+            <div class="auth-form-group">
+                <input type="email" id="auth-email" placeholder="Email address">
+                <input type="password" id="auth-password" placeholder="Password">
+                
+                <div class="auth-btn-row">
+                    <button id="modal-login-btn">Login</button>
+                    <button id="modal-signup-btn">Sign Up</button>
+                </div>
+                <button id="modal-guest-btn" class="secondary-btn">Continue as Guest</button>
+                
+                <p id="auth-error" style="color: red; font-size: 14px; margin-top: 8px;"></p>
+            </div>
+            
+            <button id="close-modal-btn" class="close-modal">&times;</button>
+        </div>
+    </div>
+
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
+    <script src="../Javascript/Firebase.js"></script>
+    <script src="../Javascript/Auth.js"></script>
+    <script src="../Javascript/Script.js"></script>
+    <script>
+        Auth.init(
+            (uid) => {
+                currentUserUid = uid;
+                DB.loadTransactions(uid, data => {
+                    transactions = Array.isArray(data) ? data : Object.values(data);
+                    if (typeof updateUI === 'function') updateUI();
+                });
+                DB.loadGoals(uid, data => {
+                    goals = Array.isArray(data) ? data : Object.values(data);
+                    if (typeof updateGoalsUI === 'function') updateGoalsUI();
+                });
+            },
+            () => { console.log("No user signed in."); }
+        );
+
+        function handleGoalSubmit() {
+            const title = document.getElementById('goal-title').value;
+            const target = document.getElementById('goal-target').value;
+            const current = document.getElementById('goal-current').value || 0;
+            if (title && target) {
+                addGoal(title, target, current);
+                document.getElementById('goal-title').value = '';
+                document.getElementById('goal-target').value = '';
+                document.getElementById('goal-current').value = '';
+            }
+        }
+    </script>
+</body>
+</html>

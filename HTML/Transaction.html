@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MoneyMate - Transactions</title>
+    <link rel="stylesheet" href="../CSS/Style.css">
+</head>
+<body>
+    <nav class="navbar">
+        <h1>MoneyMate</h1>
+        <ul>
+            <li><a href="Dashboard.html">Dashboard</a></li>
+            <li><a href="Transaction.html" class="active">Transactions</a></li>
+            <li><a href="Goals.html">Goals</a></li>
+            <li><a href="Abouts.html">About</a></li>
+            <li><button id="open-auth-btn" class="auth-trigger-btn">Account</button></li>
+        </ul>
+    </nav>
+
+    <main class="container">
+        <section class="transaction-section">
+            <h2>Transactions</h2>
+            <div class="form-group">
+                <input type="text" id="tx-desc" placeholder="Description">
+                <input type="number" id="tx-amount" placeholder="Amount">
+                <select id="tx-type">
+                    <option value="expense">Expense</option>
+                    <option value="income">Income</option>
+                </select>
+                <input type="text" id="tx-category" placeholder="Category">
+                <input type="date" id="tx-date">
+                <button onclick="handleTransactionSubmit()">Add Transaction</button>
+            </div>
+
+            <table class="transaction-table">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Description</th>
+                        <th>Category</th>
+                        <th>Amount</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody id="transaction-list">
+                    <!-- Dynamic rows populate here -->
+                </tbody>
+            </table>
+        </section>
+    </main>
+
+    <!-- Auth Modal Overlay -->
+    <div id="auth-modal" class="modal-overlay" style="display: none;">
+        <div class="modal-card">
+            <h2>MoneyMate Account</h2>
+            <p>Sign in to sync your data in real time.</p>
+            
+            <div class="auth-form-group">
+                <input type="email" id="auth-email" placeholder="Email address">
+                <input type="password" id="auth-password" placeholder="Password">
+                
+                <div class="auth-btn-row">
+                    <button id="modal-login-btn">Login</button>
+                    <button id="modal-signup-btn">Sign Up</button>
+                </div>
+                <button id="modal-guest-btn" class="secondary-btn">Continue as Guest</button>
+                
+                <p id="auth-error" style="color: red; font-size: 14px; margin-top: 8px;"></p>
+            </div>
+            
+            <button id="close-modal-btn" class="close-modal">&times;</button>
+        </div>
+    </div>
+
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
+    <script src="../Javascript/Firebase.js"></script>
+    <script src="../Javascript/Auth.js"></script>
+    <script src="../Javascript/Script.js"></script>
+    <script>
+        Auth.init(
+            (uid) => {
+                currentUserUid = uid;
+                DB.loadTransactions(uid, data => {
+                    transactions = Array.isArray(data) ? data : Object.values(data);
+                    if (typeof updateUI === 'function') updateUI();
+                });
+                DB.loadGoals(uid, data => {
+                    goals = Array.isArray(data) ? data : Object.values(data);
+                    if (typeof updateGoalsUI === 'function') updateGoalsUI();
+                });
+            },
+            () => { console.log("No user signed in."); }
+        );
+
+        function handleTransactionSubmit() {
+            const desc = document.getElementById('tx-desc').value;
+            const amount = document.getElementById('tx-amount').value;
+            const type = document.getElementById('tx-type').value;
+            const category = document.getElementById('tx-category').value;
+            const date = document.getElementById('tx-date').value;
+            if (desc && amount) {
+                addTransaction(desc, amount, type, category, date);
+                document.getElementById('tx-desc').value = '';
+                document.getElementById('tx-amount').value = '';
+            }
+        }
+    </script>
+</body>
+</html>
