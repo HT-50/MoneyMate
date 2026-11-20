@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MoneyMate - Goals</title>
+    <link rel="stylesheet" href="../CSS/Style.css">
+</head>
+<body>
+    <nav class="navbar">
+        <h1>MoneyMate</h1>
+        <ul>
+            <li><a href="index.html">Dashboard</a></li>
+            <li><a href="Transaction.html">Transactions</a></li>
+            <li><a href="Goals.html" class="active">Goals</a></li>
+            <li><a href="Abouts.html">About</a></li>
+            <li>
+                <div class="nav-auth-buttons" style="display: inline-flex; gap: 8px;">
+                    <button id="open-signin-btn" class="secondary-nav-btn">Sign In</button>
+                    <button id="open-signup-btn" class="primary-nav-btn">Sign Up</button>
+                    <button id="logout-btn" class="primary-nav-btn" style="display: none;">Logout</button>
+                </div>
+            </li>
+        </ul>
+    </nav>
+
+    <main class="container">
+        <h2>Add Goals</h2>
+        <div class="goal-form-container">
+            <div class="form-row-top">
+                <input type="text" id="goal-title" placeholder="Goal Title">
+                <button id="submit-goal-btn" class="primary-btn">Add Goal</button>
+            </div>
+            
+            <div class="form-row-bottom">
+                <div class="currency-input-wrapper">
+                    <span class="currency-symbol">$</span>
+                    <input type="number" id="goal-target" placeholder="Target Amount (e.g. 5000)">
+                </div>
+                
+                <div class="currency-input-wrapper">
+                    <span class="currency-symbol">$</span>
+                    <input type="number" id="goal-current" placeholder="Current Saved (Optional)">
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
+    <script src="../Javascript/Firebase.js"></script>
+    <script src="../Javascript/Auth.js"></script>
+    <script src="../Javascript/Script.js"></script>
+</body>
+</html>

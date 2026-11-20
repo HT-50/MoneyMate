@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MoneyMate - Dashboard</title>
+    <link rel="stylesheet" href="../CSS/Style.css">
+</head>
+<body>
+    <nav class="navbar">
+        <h1>MoneyMate</h1>
+        <ul>
+            <li><a href="index.html" class="active">Dashboard</a></li>
+            <li><a href="Transaction.html">Transactions</a></li>
+            <li><a href="Goals.html">Goals</a></li>
+            <li><a href="Abouts.html">About</a></li>
+            <li>
+                <div class="nav-auth-buttons" style="display: inline-flex; gap: 8px;">
+                    <button id="open-signin-btn" class="secondary-nav-btn">Sign In</button>
+                    <button id="open-signup-btn" class="primary-nav-btn">Sign Up</button>
+                    <button id="logout-btn" class="primary-nav-btn" style="display: none;">Logout</button>
+                </div>
+            </li>
+        </ul>
+    </nav>
+
+    <main class="container">
+        <section class="balance-section">
+            <div class="card">
+                <h2>Total Balance</h2>
+                <p id="total-balance">$0.00</p>
+            </div>
+            <div class="card-group">
+                <div class="card">
+                    <h3>Income</h3>
+                    <p id="total-income" style="color: green;">$0.00</p>
+                </div>
+                <div class="card">
+                    <h3>Expenses</h3>
+                    <p id="total-expense" style="color: red;">$0.00</p>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
+    <script src="../Javascript/Firebase.js"></script>
+    <script src="../Javascript/Auth.js"></script>
+    <script src="../Javascript/Script.js"></script>
+</body>
+</html>
