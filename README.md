@@ -29,7 +29,8 @@ MoneyMate is a responsive personal finance and savings tracker built with vanill
 │   ├── Default-user.jpg
 │   ├── Gear-Icon.png
 │   └── Icon.svg
-├── index.html
-├── Transaction.html
-├── Goals.html
-└── Abouts.html
+└── HTML/
+    ├── index.html
+    ├── Transaction.html
+    ├── Goals.html
+    └── Abouts.html
