@@ -1,5 +1,6 @@
 const SESSION_DURATION_MS = 24 * 60 * 60 * 1000; // 24 hours
 const SESSION_TIME_KEY = 'authSessionStartTime';
+const JUST_AUTHED_KEY = 'moneymate_just_authed';
 const DEFAULT_AVATAR_URL = '../Image/Default-user.jpg';
 const AVATAR_PRESETS = [
     DEFAULT_AVATAR_URL,
@@ -18,10 +19,27 @@ function getSavedAvatar(uid) {
         return DEFAULT_AVATAR_URL;
     }
 }
+async function syncAvatarToCloud(uid, url) {
+    if (!uid || !url || typeof firebase === 'undefined' || !firebase.database) return;
+    if (url.startsWith('data:image/') && url.length > 150000) return;
+    try {
+        await firebase.database().ref(`users/${uid}/avatarUrl`).set(url);
+    } catch (_) {}
+}
+async function loadCloudAvatar(uid) {
+    if (!uid || typeof firebase === 'undefined' || !firebase.database) return null;
+    try {
+        const snap = await firebase.database().ref(`users/${uid}/avatarUrl`).get();
+        return snap.exists() ? snap.val() : null;
+    } catch (_) {
+        return null;
+    }
+}
 function saveAvatar(uid, url) {
     if (!uid || !url) return false;
     try {
         localStorage.setItem(getAvatarStorageKey(uid), url);
+        syncAvatarToCloud(uid, url);
         return true;
     } catch (_) {
         return false;
@@ -87,7 +105,6 @@ const Auth = {
                 </div>
             </div>
         </div>`;
-
         document.body.insertAdjacentHTML('beforeend', modalHTML);
     },
     pickDesktopAvatar(uid, avatarEl) {
@@ -100,17 +117,14 @@ const Auth = {
             fileInput.style.display = 'none';
             document.body.appendChild(fileInput);
         }
-
         fileInput.value = '';
         fileInput.onchange = () => {
             const file = fileInput.files && fileInput.files[0];
             if (!file) return;
-
             if (!file.type.startsWith('image/')) {
                 alert('Please choose a valid image file.');
                 return;
             }
-
             const reader = new FileReader();
             reader.onload = () => {
                 const dataUrl = reader.result;
@@ -124,7 +138,6 @@ const Auth = {
             };
             reader.readAsDataURL(file);
         };
-
         fileInput.click();
     },
     changeAvatar(uid, avatarEl) {
@@ -140,19 +153,16 @@ const Auth = {
             '1'
         );
         if (!choice) return;
-
         const trimmed = choice.trim();
         if (trimmed === '1') {
             saveAvatar(uid, DEFAULT_AVATAR_URL);
             avatarEl.src = DEFAULT_AVATAR_URL;
             return;
         }
-
         if (trimmed === '5') {
             this.pickDesktopAvatar(uid, avatarEl);
             return;
         }
-
         const presetIndex = Number(trimmed) - 1;
         if (presetIndex >= 1 && presetIndex < AVATAR_PRESETS.length) {
             const nextUrl = AVATAR_PRESETS[presetIndex];
@@ -160,7 +170,6 @@ const Auth = {
             avatarEl.src = nextUrl;
             return;
         }
-
         if (trimmed) {
             saveAvatar(uid, trimmed);
             avatarEl.src = trimmed || currentUrl;
@@ -359,6 +368,13 @@ const Auth = {
             e.stopPropagation();
             this.openSettingsMenu(user, gearEl, avatarEl);
         };
+
+        loadCloudAvatar(user.uid).then((cloudUrl) => {
+            if (cloudUrl && cloudUrl !== avatarEl.src) {
+                try { localStorage.setItem(getAvatarStorageKey(user.uid), cloudUrl); } catch (_) {}
+                avatarEl.src = cloudUrl;
+            }
+        });
     },
     isSessionExpired() {
         try {
@@ -373,29 +389,29 @@ const Auth = {
     },
     initAuthState() {
         firebase.auth().setPersistence(firebase.auth.Auth.Persistence.LOCAL).catch(() => {});
-
         firebase.auth().onAuthStateChanged(user => {
             const signinBtn = document.getElementById('open-signin-btn');
             const signupBtn = document.getElementById('open-signup-btn');
             const logoutBtn = document.getElementById('logout-btn');
-            // Check if the user is currently on the About page
             const isAboutPage = window.location.pathname.includes('Abouts.html');
-
             if (user) {
+                try {
+                    if (sessionStorage.getItem(JUST_AUTHED_KEY) === '1') {
+                        sessionStorage.removeItem(JUST_AUTHED_KEY);
+                    }
+                } catch (_) {}
+
                 if (this.isSessionExpired()) {
                     this.logout();
                     return;
                 }
-
                 try {
                     if (!localStorage.getItem(SESSION_TIME_KEY)) {
                         localStorage.setItem(SESSION_TIME_KEY, String(Date.now()));
                     }
                 } catch (_) {}
-
                 currentUserUid = user.uid;
                 this.ensureAvatarUI(user);
-
                 if (signinBtn) signinBtn.style.display = 'none';
                 if (signupBtn) signupBtn.style.display = 'none';
                 if (logoutBtn) {
@@ -403,7 +419,12 @@ const Auth = {
                     logoutBtn.onclick = () => this.logout();
                 }
 
-                if (typeof DB !== 'undefined') {
+                if (typeof loadFromLocalStorage === 'function') {
+                    loadFromLocalStorage(user.uid);
+                }
+                if (typeof pullCloudToLocal === 'function') {
+                    pullCloudToLocal(user.uid);
+                } else if (typeof DB !== 'undefined') {
                     DB.loadTransactions(user.uid, data => {
                         transactions = Array.isArray(data) ? data : (data ? Object.values(data) : []);
                         if (typeof updateUI === 'function') updateUI();
@@ -416,7 +437,6 @@ const Auth = {
             } else {
                 currentUserUid = null;
                 this.ensureAvatarUI(null);
-
                 if (logoutBtn) logoutBtn.style.display = 'none';
                 if (signinBtn) {
                     signinBtn.style.display = 'inline-block';
@@ -426,11 +446,13 @@ const Auth = {
                     signupBtn.style.display = 'inline-block';
                     signupBtn.onclick = () => this.openModal('signup');
                 }
-                transactions = [];
-                goals = [];
-                if (typeof updateUI === 'function') updateUI();
-                if (typeof updateGoalsUI === 'function') updateGoalsUI();
-                // Only prompt sign in automatically if NOT on the About page
+
+                if (typeof loadFromLocalStorage === 'function') {
+                    loadFromLocalStorage(null);
+                } else {
+                    if (typeof updateUI === 'function') updateUI();
+                    if (typeof updateGoalsUI === 'function') updateGoalsUI();
+                }
                 if (!isAboutPage) {
                     this.openModal('signin');
                 }
@@ -552,10 +574,8 @@ const Auth = {
         window.addEventListener('click', (e) => {
             if (e.target === modal) modal.style.display = 'none';
         });
-
         this.attachEmailValidator(signinEmail, signinStatus, 'signin');
         this.attachEmailValidator(signupEmail, signupStatus, 'signup');
-
         const loginBtn = document.getElementById('modal-login-btn');
         if (loginBtn) {
             loginBtn.addEventListener('click', () => {
@@ -591,7 +611,6 @@ const Auth = {
                     this.showError('signup-error', "Invalid email address. Please use a real email.");
                     return;
                 }
-
                 signupBtn.disabled = true;
                 try {
                     const existsInFirebase = await this.checkFirebaseEmail(email);
@@ -603,7 +622,6 @@ const Auth = {
                 } catch (_) {
                     // If lookup fails, let createUserWithEmailAndPassword handle it
                 }
-
                 this.signup(email, password, (err) => {
                     signupBtn.disabled = false;
                     if (err) {
@@ -622,18 +640,30 @@ const Auth = {
     signup(email, password, callback) {
         firebase.auth().createUserWithEmailAndPassword(email, password)
             .then(res => {
-                try { localStorage.setItem(SESSION_TIME_KEY, String(Date.now())); } catch (_) {}
-                callback(null, res.user);
+                try {
+                    localStorage.setItem(SESSION_TIME_KEY, String(Date.now()));
+                    sessionStorage.setItem(JUST_AUTHED_KEY, '1');
+                } catch (_) {}
+                if (callback) callback(null, res.user);
+                window.location.reload();
             })
-            .catch(err => callback(err));
+            .catch(err => {
+                if (callback) callback(err);
+            });
     },
     login(email, password, callback) {
         firebase.auth().signInWithEmailAndPassword(email, password)
             .then(res => {
-                try { localStorage.setItem(SESSION_TIME_KEY, String(Date.now())); } catch (_) {}
-                callback(null, res.user);
+                try {
+                    localStorage.setItem(SESSION_TIME_KEY, String(Date.now()));
+                    sessionStorage.setItem(JUST_AUTHED_KEY, '1');
+                } catch (_) {}
+                if (callback) callback(null, res.user);
+                window.location.reload();
             })
-            .catch(err => callback(err));
+            .catch(err => {
+                if (callback) callback(err);
+            });
     },
     logout(callback) {
         try { localStorage.removeItem(SESSION_TIME_KEY); } catch (_) {}
