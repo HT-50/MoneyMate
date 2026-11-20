@@ -3,21 +3,9 @@ let transactions = [];
 let goals = [];
 
 document.addEventListener("DOMContentLoaded", () => {
-    if (typeof DB !== 'undefined') {
-        DB.initAuth(uid => {
-            currentUserUid = uid;
-            DB.loadTransactions(uid, data => {
-                transactions = Array.isArray(data) ? data : Object.values(data);
-                updateUI();
-            });
-            DB.loadGoals(uid, data => {
-                goals = Array.isArray(data) ? data : Object.values(data);
-                updateGoalsUI();
-            });
-        });
-    } else {
-        loadFromLocalStorage();
-    }
+    // Initial fallback to local storage on boot; 
+    // Auth.js will handle fetching Firebase data once the auth state resolves.
+    loadFromLocalStorage();
 });
 
 function loadFromLocalStorage() {
@@ -75,10 +63,12 @@ function deleteGoal(id) {
 }
 
 function syncData() {
+    // If a user is authenticated, save securely to Firebase under their UID
     if (currentUserUid && typeof DB !== 'undefined') {
         DB.saveTransactions(currentUserUid, transactions);
         DB.saveGoals(currentUserUid, goals);
     } else {
+        // Otherwise, store locally for guests/offline users
         saveToLocalStorage();
     }
     updateUI();
@@ -108,7 +98,7 @@ function updateUI() {
                 <td>${tx.date}</td>
                 <td>${tx.description}</td>
                 <td>${tx.category}</td>
-                <td style="color: ${tx.type === 'income' ? 'green' : 'red'};">
+                <td class="${tx.type === 'income' ? 'income-text' : 'expense-text'}">
                     ${tx.type === 'income' ? '+' : '-'}$${tx.amount.toFixed(2)}
                 </td>
                 <td><button onclick="deleteTransaction('${tx.id}')">Delete</button></td>
@@ -119,7 +109,7 @@ function updateUI() {
 }
 
 function updateGoalsUI() {
-    const goalsContainer = document.getElementById('goals-container');
+    const goalsContainer = document.getElementById('goals-container') || document.querySelector('.goals-grid');
     if (goalsContainer) {
         goalsContainer.innerHTML = '';
         goals.forEach(goal => {
@@ -129,8 +119,8 @@ function updateGoalsUI() {
             goalCard.innerHTML = `
                 <h3>${goal.title}</h3>
                 <p>Target: $${goal.targetAmount.toFixed(2)} | Current: $${goal.currentAmount.toFixed(2)}</p>
-                <div style="background:#eee; width:100%; height:15px; border-radius:5px; overflow:hidden;">
-                    <div style="width: ${percentage}%; background: #4f46e5; height: 100%;"></div>
+                <div style="background:#e2e8f0; width:100%; height:12px; border-radius:6px; overflow:hidden;">
+                    <div style="width: ${percentage}%; background: #4f46e5; height: 100%; border-radius:6px;"></div>
                 </div>
                 <p>${percentage}% achieved</p>
                 <button onclick="deleteGoal('${goal.id}')">Delete Goal</button>

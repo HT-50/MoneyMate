@@ -14,48 +14,37 @@
             <li><a href="Transaction.html">Transactions</a></li>
             <li><a href="Goals.html" class="active">Goals</a></li>
             <li><a href="Abouts.html">About</a></li>
-            <li><button id="open-auth-btn" class="auth-trigger-btn">Account</button></li>
+            <li>
+                <div class="nav-auth-buttons" style="display: inline-flex; gap: 8px;">
+                    <button id="open-signin-btn" class="secondary-nav-btn">Sign In</button>
+                    <button id="open-signup-btn" class="primary-nav-btn">Sign Up</button>
+                    <button id="logout-btn" class="primary-nav-btn" style="display: none;">Logout</button>
+                </div>
+            </li>
         </ul>
     </nav>
 
     <main class="container">
-        <section class="goals-section">
-            <h2>Savings Goals</h2>
-            <div class="form-group">
+        <h2>Add Goals</h2>
+        <div class="goal-form-container">
+            <div class="form-row-top">
                 <input type="text" id="goal-title" placeholder="Goal Title">
-                <input type="number" id="goal-target" placeholder="Target Amount">
-                <input type="number" id="goal-current" placeholder="Current Saved (Optional)">
-                <button onclick="handleGoalSubmit()">Add Goal</button>
+                <button id="submit-goal-btn" class="primary-btn">Add Goal</button>
             </div>
-
-            <div id="goals-container" class="goals-grid">
-                <!-- Dynamic goals cards populate here -->
-            </div>
-        </section>
-    </main>
-
-    <!-- Auth Modal Overlay -->
-    <div id="auth-modal" class="modal-overlay" style="display: none;">
-        <div class="modal-card">
-            <h2>MoneyMate Account</h2>
-            <p>Sign in to sync your data in real time.</p>
             
-            <div class="auth-form-group">
-                <input type="email" id="auth-email" placeholder="Email address">
-                <input type="password" id="auth-password" placeholder="Password">
-                
-                <div class="auth-btn-row">
-                    <button id="modal-login-btn">Login</button>
-                    <button id="modal-signup-btn">Sign Up</button>
+            <div class="form-row-bottom">
+                <div class="currency-input-wrapper">
+                    <span class="currency-symbol">$</span>
+                    <input type="number" id="goal-target" placeholder="Target Amount (e.g. 5000)">
                 </div>
-                <button id="modal-guest-btn" class="secondary-btn">Continue as Guest</button>
                 
-                <p id="auth-error" style="color: red; font-size: 14px; margin-top: 8px;"></p>
+                <div class="currency-input-wrapper">
+                    <span class="currency-symbol">$</span>
+                    <input type="number" id="goal-current" placeholder="Current Saved (Optional)">
+                </div>
             </div>
-            
-            <button id="close-modal-btn" class="close-modal">&times;</button>
         </div>
-    </div>
+    </main>
 
     <!-- Firebase SDKs -->
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
@@ -64,33 +53,5 @@
     <script src="../Javascript/Firebase.js"></script>
     <script src="../Javascript/Auth.js"></script>
     <script src="../Javascript/Script.js"></script>
-    <script>
-        Auth.init(
-            (uid) => {
-                currentUserUid = uid;
-                DB.loadTransactions(uid, data => {
-                    transactions = Array.isArray(data) ? data : Object.values(data);
-                    if (typeof updateUI === 'function') updateUI();
-                });
-                DB.loadGoals(uid, data => {
-                    goals = Array.isArray(data) ? data : Object.values(data);
-                    if (typeof updateGoalsUI === 'function') updateGoalsUI();
-                });
-            },
-            () => { console.log("No user signed in."); }
-        );
-
-        function handleGoalSubmit() {
-            const title = document.getElementById('goal-title').value;
-            const target = document.getElementById('goal-target').value;
-            const current = document.getElementById('goal-current').value || 0;
-            if (title && target) {
-                addGoal(title, target, current);
-                document.getElementById('goal-title').value = '';
-                document.getElementById('goal-target').value = '';
-                document.getElementById('goal-current').value = '';
-            }
-        }
-    </script>
 </body>
 </html>
